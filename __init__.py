@@ -10,8 +10,8 @@ produtos = produtos.fillna('-')
 
 
 #inserindo o driver pra utilização do Selenium
-#driver = webdriver.Chrome()
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
+#driver = webdriver.Firefox()
 
 #percorrendo os dados contidos no dataframe produtos
 for i, linha in produtos.iterrows():
@@ -20,28 +20,20 @@ for i, linha in produtos.iterrows():
     
     
     
-    try:
-        #percorendo Amazon
-        driver.get(linha['Amazon'])
-        precoAmazon = driver.find_element_by_id('priceblock_ourprice').text
+   
+    #percorendo Amazon
+    driver.get(linha['Amazon'])
+    precoAmazon = driver.find_element_by_id('priceblock_ourprice').text
 
-        #percorrendo Lojas Americanas
-        driver.get(linha['Lojas Americanas'])
-        precoAmericanas = driver.find_element_by_class_name('src__BestPrice-sc-1jvw02c-5').text
+    #percorrendo Lojas Americanas
+    driver.get(linha['Lojas Americanas'])
+    precoAmericanas = driver.find_element_by_class_name('src__BestPrice-sc-1jvw02c-5').text
         
-        #percorrendo Magazine Luiza
-        driver.get(linha['Magazine Luiza'])
-        precoMagalu = driver.find_element_by_class_name('price-template__text').text    
+    #percorrendo Magazine Luiza
+    driver.get(linha['Magazine Luiza'])
+    precoMagalu = driver.find_element_by_class_name('price-template__text').text    
         
-    except:
-        driver.get(linha['Amazon'])
-        precoAmazon = driver.find_element_by_xpath('/html/body/div[2]/div[2]/div[5]/div[3]/div[4]/div[8]/div[1]/div/table/tbody/tr[1]/td[2]/span[1]').text
-        
-        driver.get(linha['Lojas Americanas'])
-        precoAmericanas = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/div[2]/div[1]/div[1]/div').text
-    
-        driver.get(linha['Magazine Luiza'])
-        precoMagalu = ''
+ 
        
     precoAmazon = TransformaTexto(precoAmazon)
     precoAmericanas = TransformaTexto(precoAmericanas)
@@ -77,7 +69,7 @@ contents = f'''
 
 
 
-email = yg.SMTP(user, password)
+email = yg.SMTP(user=user, password=password)
 
 email.send(receiver, subject, contents)
         
