@@ -1,17 +1,20 @@
-from helper import TransformaTexto
+from helper import TransformaTexto, EnviaEmail
 import pandas as pd
-import yagmail as yg
 from selenium import webdriver
+from xvfbwrapper import Xvfb
 
 #importação da base pra dentro do script
 produtos = pd.read_excel('/home/vitor/Projetos/Python/buscapreco/storage/Produtos.xlsx')
 produtos = produtos.fillna('-')
 
-
+#lib para ocultar navegador durante execução do código
+display = Xvfb()
+display.start()
 
 #inserindo o driver pra utilização do Selenium
 driver = webdriver.Chrome()
 #driver = webdriver.Firefox()
+#driver.set_window_position(-10000, 0)
 
 #percorrendo os dados contidos no dataframe produtos
 for i, linha in produtos.iterrows():
@@ -19,27 +22,52 @@ for i, linha in produtos.iterrows():
     precOriginal = linha['Preço Original']
     
     
-    
-   
-    #percorendo Amazon
+    #Bloco percorrendo Amazon
     driver.get(linha['Amazon'])
-    precoAmazon = driver.find_element_by_id('priceblock_ourprice').text
+    try:
+        #percorendo Amazon
+        precoAmazon = driver.find_element_by_id('priceblock_ourprice').text
+        precoAmazon = TransformaTexto(precoAmazon)
 
-    #percorrendo Lojas Americanas
-    driver.get(linha['Lojas Americanas'])
-    precoAmericanas = driver.find_element_by_class_name('src__BestPrice-sc-1jvw02c-5').text
-        
-    #percorrendo Magazine Luiza
-    driver.get(linha['Magazine Luiza'])
-    precoMagalu = driver.find_element_by_class_name('price-template__text').text    
-        
- 
-       
-    precoAmazon = TransformaTexto(precoAmazon)
-    precoAmericanas = TransformaTexto(precoAmericanas)
-    precoMagalu = TransformaTexto(precoMagalu)    
+    except:
+        try:   
+            #utilizar elemento alternativo ao id dentr da pagina
+            precoAmazon = driver.find_element_by_id('priceblock_ourprice').text
+            precoAmazon = TransformaTexto(precoAmazon)
+        except:
+            print(f'Produto {linha["Link Produto"]} indisponível no link da Amazon')
+            precoAmazon = linha['Preço Original'] * 3
     
-    print(precoAmazon, precoAmericanas, precoMagalu)
+    #Bloco Americanas
+    driver.get(linha['Lojas Americanas'])
+    try:    
+        #percorrendo Lojas Americanas
+        precoAmericanas = driver.find_element_by_class_name('src__BestPrice-sc-1jvw02c-5').text
+        precoAmericanas = TransformaTexto(precoAmericanas)
+    except:
+        try:
+            #utilizar elemento alternativo na pagina do produto
+            precoAmericanas = driver.find_element_by_class_name('src__BestPrice-sc-1jvw02c-5').text        
+            precoAmericanas = TransformaTexto(precoAmericanas)
+        except:
+            print(f'Produto {linha["Link Produto"]} indisponível no link das Americanas')
+            precoAmericanas = linha['Preço Original'] * 3 
+    
+    #Bloco Magazine Luiza
+    driver.get(linha['Magazine Luiza'])
+    try:
+        #percorrendo Magazine Luiza
+        precoMagalu = driver.find_element_by_class_name('price-template__text').text    
+        precoMagalu = TransformaTexto(precoMagalu)
+    except:    
+        try:
+            #utilizar elemento alternativo na pagina do produto
+            precoMagalu = driver.find_element_by_class_name('price-template__text').text
+            precoMagalu = TransformaTexto(precoMagalu)
+        except:    
+            print(f'Produto {linha["Link Produto"]} indisponível no link das Americanas')
+            precoMagalu = linha['Preço Original'] * 3  
+    
     
     listaPrecos = [(precoAmazon, 'Amazon'), (precoAmericanas, 'Americanas'), (precoMagalu, 'Magalu'), (precOriginal, 'Original')]
     #Ao utilizar o metodo sort irá organizar a partir do primeiro item de cada Tupla, nesse caso os preços
@@ -53,23 +81,17 @@ for i, linha in produtos.iterrows():
 #salvando o arquivo em excel    
 produtos.to_excel('/home/vitor/Projetos/Python/buscapreco/storage/Produtos.xlsx')
 
-descontoMinimo = 0.2
+driver.quit()
+display.stop()  
+
+
+descontoMinimo = 0.05
 
 #usará todas as colunas
 tabelaFiltrada = produtos.loc[produtos['Preço Atual'] <= produtos['Preço Original']*(1-descontoMinimo), :]
-user = 'vesteves33@gmail.com'
-password = '300694vitoR.'
+tabelaFiltrada = tabelaFiltrada.to_html()
 
-receiver = user
-subject = 'Alerta de preço dos produtos com desconto'  
-contents = f'''
-<p>Estes são os produtos com de {descontoMinimo:.0%}% desconto</p>
-<p>{tabelaFiltrada.to_html()} </p>
-'''
-
-
-
-email = yg.SMTP(user=user, password=password)
-
-email.send(receiver, subject, contents)
+if True:
+    EnviaEmail(descontoMinimo, tabelaFiltrada)
+print('Sucesso')
         
