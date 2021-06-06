@@ -1,7 +1,8 @@
-from helper import TransformaTexto, EnviaEmail
+from helper import TransformaTexto, EnviaEmail, VerificaDF
 import pandas as pd
 from selenium import webdriver
 from xvfbwrapper import Xvfb
+import time
 
 #importação da base pra dentro do script
 produtos = pd.read_excel('/home/vitor/Projetos/Python/buscapreco/storage/Produtos.xlsx')
@@ -85,13 +86,17 @@ driver.quit()
 display.stop()  
 
 
-descontoMinimo = 0.05
+descontoMinimo = 0.2
 
 #usará todas as colunas
 tabelaFiltrada = produtos.loc[produtos['Preço Atual'] <= produtos['Preço Original']*(1-descontoMinimo), :]
+tabelaFiltrada = VerificaDF(tabelaFiltrada)
 tabelaFiltrada = tabelaFiltrada.to_html()
+
 
 if True:
     EnviaEmail(descontoMinimo, tabelaFiltrada)
 print('Sucesso')
         
+#função que mantem programa aguardando tempo para executar novamente
+time.sleep(3600*5)

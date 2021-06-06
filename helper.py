@@ -18,6 +18,15 @@ def EnviaEmail(desconto, produtos, receptor='vesteves33@gmail.com'):
 
     receiver = receptor
     subject = f'Alerta de preço dos produtos com desconto de {desconto:.0%}'  
-    contents = f'<p>Estes são os produtos com de {desconto:.0%} desconto</p>{produtos}'
+    contents = f'<p>Estes são os produtos com de <strong>{desconto:.0%}</strong> desconto</p>{produtos}'
 
     return email.send(receiver, subject, contents) 
+
+def VerificaDF(dataframe):
+    colunas = dataframe.columns
+    
+    for coluna in colunas:
+        if 'Unnamed:' in coluna:
+            del dataframe[coluna]
+    
+    return dataframe       
