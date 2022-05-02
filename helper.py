@@ -12,7 +12,7 @@ def TransformaTexto(texto):
   
 def EnviaEmail(desconto, produtos, receptor='vesteves33@gmail.com'):
     user = 'vesteves33@gmail.com'
-    password = '300694vitoR.'
+    password = ''
     
     email = yg.SMTP(user=user, password=password)
 
